@@ -1,4 +1,4 @@
 Wordgame
 ========
 
-The game which i worked on for Google App script
+The game which i worked on for Google Appengine
