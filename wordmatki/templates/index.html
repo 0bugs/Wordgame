@@ -1,0 +1,2381 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+        <meta property="og:title" content="{{ t }}"/>
+        <meta property="og:image" content="{{ i }}"/>
+        <meta property="og:description" content="{{ d }}"/>
+	    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Madrat Games - Word Matki</title>
+		<link href="css/master.css" rel="stylesheet" type="text/css" />
+		<link href="css/jquery.jscrollpane.css" rel="stylesheet" type="text/css" />
+		<link href="css/jquery.colorbox.css" rel="stylesheet" type="text/css" />
+		<link href="css/keyboard.css" rel="stylesheet" type="text/css" />
+        <link href="css/animation.css" rel="stylesheet" type="text/css" />
+		<script type="text/javascript" src="js/gamooga.js" ></script>
+		<script type="text/javascript" src="js/keyboard.js"></script>
+		<script type="text/javascript" src="js/base64.js" ></script>		
+		<script type="text/javascript" src="js/jquery.min.js" ></script>
+		<script type="text/javascript" src="js/jquery.mousewheel.js" ></script>
+		<script type="text/javascript" src="js/jquery.jscrollpane.min.js" ></script>
+		<script type="text/javascript" src="js/jquery.colorbox.min.js"></script>
+        <script type="text/javascript" src="js/plugin.howtoplay.js" ></script>
+        <script type="text/javascript" src="js/points-animations.js" ></script>
+        <script type="text/javascript" src="js/jquery.jcarousel.min.js" ></script>
+		<script type="text/javascript">
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-31150326-1']);
+		  _gaq.push(['_trackPageview']);
+		  (function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+		</script>
+		<script type="text/javascript">
+		var noOfGameEnded = 0;
+		var totIdleTime = 0;
+		var idleTimeRun;
+		$(function(){
+			$(window).unload(function(){
+				if(noOfGameEnded<3){
+					_gaq.push(['_trackEvent', 'NotEngaged', myEmail, noOfGameEnded.toString()]);
+				}else{
+					_gaq.push(['_trackEvent', 'Engaged', myEmail, noOfGameEnded.toString()]);
+				}
+			});
+			function run_idletime(){
+				idleTimeRun = setInterval(function(){
+					totIdleTime++;
+				},1000);
+			}
+			window.onfocus = function () {
+				clearInterval(idleTimeRun);
+			}; 
+			window.onblur = function () { 
+				clearInterval(idleTimeRun);
+				run_idletime();
+			};
+		});
+		</script>
+	</head>
+	<body>
+	
+		<script>
+            var SERVER = window.location.host;
+		    var alRe = /[a-zA-Z]/g;
+			var encPlusRE = /%2B/g;
+			var encSlashRE = /%2F/g;
+			var encEqualToRE = /%3D/g;
+			var plusRE = /\+/g;
+			var slashRE = /\//g;
+			var equaltoRE = /=/g;
+			var wordChainTail,currTarget,currLetters,currWord;
+			var hintTimeout;
+		    // Gamooga API functions
+			var chars, halfs;
+		    var hindi_chars = [];
+		    for (var i=0;i<37;i++) {
+		        if (2325+i == 2345 || 2325+i == 2353 || 2325+i == 2355 || 2325+i == 2356) continue;
+		        hindi_chars.push(String.fromCharCode(2325+i));
+		    }
+		    hindi_chars.push(String.fromCharCode(2325)+String.fromCharCode(2381)+String.fromCharCode(2359));
+		    hindi_chars.push(String.fromCharCode(2340)+String.fromCharCode(2381)+String.fromCharCode(2352));
+		    hindi_chars.push(String.fromCharCode(2332)+String.fromCharCode(2381)+String.fromCharCode(2334));
+            /*var chars = new Array(
+				"क","ख","ग","घ","ङ",
+				//   1,  2,  3,  4, 5
+				"च","छ","ज", "झ","ञ",
+				//   6,  7,  8,  9,  10
+				"ट","ठ","ड","ढ","ण",
+				//  11, 12, 13, 14, 15
+				"त","थ","द","ध","न",
+				//  16, 17, 18, 19, 20
+				"प","फ","ब","भ","म",
+				//  21, 22, 23, 24, 25
+				"य","र","ल","व","श","ष","स","ह","क्ष","त्र","ज्ञ"
+				//  26, 27, 28, 29, 30,31, 32, 33, 34,35, 36
+			);*/
+			// ku, kay, kee, ke, kaa, ko, k, k(ch), kam, kuu, kou, kai, kru
+			var hindi_halfs = [String.fromCharCode(2369),String.fromCharCode(2375),String.fromCharCode(2368),
+			                String.fromCharCode(2367),String.fromCharCode(2366),String.fromCharCode(2379),
+			                String.fromCharCode(2381),String.fromCharCode(2305),String.fromCharCode(2306),
+			                String.fromCharCode(2370),String.fromCharCode(2380),String.fromCharCode(2376),
+			                String.fromCharCode(2371)];
+			/*var halfs = new Array(
+				"","्","ा","ि","ी","ु","ृ","ू","े","ै","ो","ौ","ं","ः"
+			);*/
+            /* ক খ গ ঘ ঙ
+               1 2 3 4 5
+               
+                              চ ছ জ ঝ ঞ
+               6 7 8 9 10
+                              
+                              ট ঠ ড ঢ ণ
+               11 12 13 14 15 
+                              
+                              ত থ দ ধ ন
+               16 17 18 19 20
+                              
+                              প ফ ব ভ ম
+               21 22 23 24 25
+                              
+                              য র ল শ ষ স হ 
+               26 27 28 29 30 31 32
+            */
+			var bengali_chars = [];
+			for (var i=0;i<37;i++) {
+                if (2453+i == 2473 || 2453+i == 2481 || (2453+i >= 2483 && 2453+i <= 2485)) continue;
+				bengali_chars.push(String.fromCharCode(2453+i));
+			}
+			var bengali_halfs = [String.fromCharCode(2497),String.fromCharCode(2503),String.fromCharCode(2496),
+							String.fromCharCode(2495),String.fromCharCode(2494),String.fromCharCode(2507),
+							String.fromCharCode(2509),String.fromCharCode(2433),String.fromCharCode(2434),
+							String.fromCharCode(2498),String.fromCharCode(2508),String.fromCharCode(2504),
+							String.fromCharCode(2499)
+                            ];
+            
+            var tamil_chars = [
+            String.fromCharCode(2965),String.fromCharCode(2969),String.fromCharCode(2970),
+                        //      க       ங       ச
+            // ka   nga ca  3
+            String.fromCharCode(2972),String.fromCharCode(2974),String.fromCharCode(2975),
+                        //      ஜ       ஞ       ட
+            //  ja  nya tta 6
+            String.fromCharCode(2979),String.fromCharCode(2980),String.fromCharCode(2984),
+                        //      ண       த       ந
+            //  nna ta  na  9
+            String.fromCharCode(2985),String.fromCharCode(2986),String.fromCharCode(2990),
+                        //      ன       ப       ம
+            // nnna pa  ma  12
+            String.fromCharCode(2991),String.fromCharCode(2992),String.fromCharCode(2993),
+                        //      ய       ர       ற
+            //  ya  ra  rra 15
+            String.fromCharCode(2994),String.fromCharCode(2995),String.fromCharCode(2996),
+                        //      ல       ள       ழ
+            //  la  lla llla    18
+            String.fromCharCode(2997),String.fromCharCode(2998),String.fromCharCode(2999),
+                        //      வ       ஶ       ஷ
+            //  va  sha ssa 21
+            String.fromCharCode(3000),String.fromCharCode(3001)];
+                        //      ஸ       ஹ
+            //  sa  ha  23
+            
+			var tamil_halfs = [String.fromCharCode(3016),String.fromCharCode(3006),String.fromCharCode(3009),
+							String.fromCharCode(3007),String.fromCharCode(3021),String.fromCharCode(3014),
+							String.fromCharCode(3015),String.fromCharCode(3020),String.fromCharCode(3019),
+							String.fromCharCode(3018),String.fromCharCode(3010),String.fromCharCode(3008)
+							];
+            
+            
+            /*
+                        ಕ   ಖ   ಗ   ಘ   ಙ
+            1 2  3  4  5
+                        ಚ   ಛ   ಜ   ಝ   ಞ
+            6  7  8  9  10
+                        ಟ   ಠ   ಡ   ಢ   ಣ
+            11 12 1314 15
+                        ತ   ಥ   ದ   ಧ   ನ
+            16 1718 19 20
+                        ಪ   ಫ   ಬ   ಭ   ಮ
+            21 22 2324 25
+                        ಯ   ರ   ಱ   ಲ   ಳ   ವ   ಶ   ಷ   ಸ   ಹ
+            26 27 28 2930 31 3233 34 35
+            */
+            var kannada_chars = [];
+			for (var i=0;i<37;i++) {
+			    if (3221+i == 3241 || 3221+i == 3252) continue;
+				kannada_chars.push(String.fromCharCode(3221+i));
+			}
+			var kannada_halfs = [String.fromCharCode(3271),String.fromCharCode(3270),String.fromCharCode(3265),
+							String.fromCharCode(3263),String.fromCharCode(3262),String.fromCharCode(3277),
+							String.fromCharCode(3266),String.fromCharCode(3202),String.fromCharCode(3272),
+							String.fromCharCode(3275),String.fromCharCode(3264),String.fromCharCode(3274),
+                            String.fromCharCode(3276),String.fromCharCode(3267)
+							];
+            
+			var languageConf = [
+                [hindi_chars, hindi_halfs, 6, "s-m", [String.fromCharCode(2305),String.fromCharCode(2306)], "meraa = मेरा", 28], //hindi
+                [tamil_chars, tamil_halfs, 5, "s-m5", ['',''], "puli = புலி", 23], //tamil
+                [bengali_chars, bengali_halfs, 6, "s-m", [String.fromCharCode(2433),String.fromCharCode(2434)], "kavi= কবি", 22], //bengali
+                [kannada_chars, kannada_halfs, 7, "s-m7",  [String.fromCharCode(3202),String.fromCharCode(3203)], "huli = ಹುಲಿ", 28] //kannada
+            ];
+            var langNames = ["Hindi","Tamil","Bengali","Kannada"];
+            var currLanguage = null;
+			var currLanguageSetOnce = false;
+            function setLanguage(idx) {
+				_gaq.push(['_trackEvent', 'currLanguage', langNames[currLanguage], '']);
+				currLanguageSetOnce = true;
+                currLanguage = idx;
+                $('.choose-language label').html(langNames[idx]);
+                chars = languageConf[idx][0];
+                halfs = languageConf[idx][1];
+                $('.sub-matra-links-main').removeClass('sub-matras-5').removeClass('sub-matras-7').removeClass('sub-matras-6');
+                $('.sub-matra-links-main').removeAttr('rel');
+                $('.sub-matra-links-main').addClass("sub-matras-"+languageConf[idx][2]).attr('rel',languageConf[idx][3]);
+                $('#halfs12').hide();
+                $('#halfs13').hide();
+                for (var i=5;i<languageConf[idx][2];i++) {
+                    $('#halfs'+(7+i)).show();
+                }
+                //$('.board-bg ul li a').textfill({maxFontPixels:languageConf[idx][6]});
+                $('.pillar-bg').removeClass('hindi').removeClass('tamil').removeClass('bengali').removeClass('kannada');
+                $('.pillar-bg').addClass(langNames[idx].toLowerCase());
+                $('#sub_matra_links_image').attr('usemap','#Map2-'+languageConf[idx][2]);
+                $('#tiplang').text(languageConf[idx][5]);
+                initKB(idx);
+                /*if (idx != 0) {
+                    $('#word').focus(function() {$(this).blur();});
+                }*/
+            }
+            var inited = false;
+			var myName,myId;
+			var fireTimerInterval, endTimerTimeout, remainingTime;
+			var restartRemTime, restartTimerInterval;
+		    var gc;
+		    var timeout = true;
+		    var letterUsed = new Array(17);
+		    var owner;
+
+			var words=Array();
+			var correctWords=Array();
+			var incorrectWords=Array();
+			var repeatWords=Array();
+			totIdleTime=0;
+
+			var matraClickedList = Array();
+			var letterClickedList = Array();
+
+			var letterClickOnce = false;
+			var matraClickOnce = false;
+			var wordSubmitedOnce = false;
+			var gameEndOnce = false;
+			var gameRestaredOnce = false;
+
+    		function gmgOnInit() {
+    		    gc = new GamoogaClient(gmgOnConnect,gmgOnRead,gmgOnError,gmgOnClose);//,"127.0.0.1");
+    		    /*if (window.location.href.split("#").length > 1) {
+                    gc.connectToSession(parseInt(window.location.href.split("#")[1]),"f86f9104-c96f-11e0-aec4-4040ede3b49a");
+                    owner = false;
+                } else {
+                    gc.createConnectToSession(27,"f86f9104-c96f-11e0-aec4-4040ede3b49a");
+                    owner = true;
+                }*/
+				if (gameType == 1) {
+                    $('.btn-invite-friends').hide();
+					gc.createConnectToSession(27,"f86f9104-c96f-11e0-aec4-4040ede3b49a");
+				} else if (gameType == 2) {
+                    $('.btn-invite-friends').show();
+					gc.connectToRoom(27,"f86f9104-c96f-11e0-aec4-4040ede3b49a");
+				}
+    		}
+			var myName = "{{uname}}";
+			var myId = "{{uid}}";
+    		function gmgOnConnect() {
+    		    console.log(myName);
+    		    return JSON.stringify({fn:myName,uid:myId,lang:currLanguage});
+            }
+			_gaq.push(['_trackEvent', 'home', myName, '']);
+			function gmgOnRead(sdata) {
+                console.log(sdata);
+				data = JSON.parse(sdata);
+				if (data['t'] == 2) {
+				    $.getJSON("http://"+SERVER+"/aksharit_get_user_data/"+myId+"/?callback=?",
+				        function(data) {
+				            console.log(data['w']);
+				            $('#iq').text("Score: "+data['s']);
+				            $('#rank').text(data['g']);
+				            $('#totalscore').text(data['w']);
+				            $('#name').text(myName);
+				        }
+				    );
+                    console.log(data['l']);
+					for (u in data['l']) {
+                        //var carousel = jQuery('.scroller-friends-content').data('jcarousel');
+                        //alert("1");
+						//carousel.add(carousel.last,
+                        $('#online_friends_list').append(
+    						'<li class="friend-list" id="ol_'+data['l'][u][0][1]+'">'+
+							'        <span class="pic" ><img src="images/profile-pic-blank-45x44.png" /></span>'+
+							'        <span class="name-score" >'+
+							'			<span class="name">'+data['l'][u][0][0]+'</span>'+
+							'			<span class="points" ><span id="pts_'+data['l'][u][0][1]+'">'+data['l'][u][1]+'</span> pts</span>'+
+							'		</span>'+
+							'		<!--<span class="rank" >'+
+							'			2nd'+
+							'		</span>-->'+
+							'	</li>');
+					}
+					$('#live_count').text(data['l'].length);
+					$('#words_list').html('');
+    				//$('#online_friends_list .points span').text('0');
+				    letterUsed = new Array(17);
+					$('#word').val('');
+                    inputBoxBlur();
+					currWord = "";
+					if (data.cs == 2) {
+    					currLetters = data.cl;
+	    				for (i=0; i<data.cl.length; i++) {
+	    					$('#letter'+(i+1)).text(chars[data.cl[i]-1]);
+                            $('#letter'+(i+1)).attr('orig_text', chars[data.cl[i]-1]);
+                            console.log("char "+(i+1)+": "+chars[data.cl[i]-1].charCodeAt(0));
+	    				}
+	    				$.colorbox.close();
+	    				startGame(parseInt(data['ct']));
+                        $('input#word').focus();
+    				} else if (data.cs == 3) {
+    				    restartGame(parseInt(data['ct']));
+    				}
+				} else if (data['t'] == 1) {
+                    var carousel = jQuery('.scroller-friends-content').data('jcarousel');
+                    carousel.add(1, '<li class="friend-list" id="ol_'+data['u']+'">'+
+							'        <span class="pic" ><img src="images/profile-pic-blank-45x44.png" /></span>'+
+							'        <span class="name-score" >'+
+							'			<span class="name">'+data['n']+'</span>'+
+							'			<span class="points" ><span id="pts_'+data['u']+'">0</span> pts</span>'+
+							'		</span>'+
+							'		<!--<span class="rank" >'+
+							'			2nd'+
+							'		</span>-->'+
+							'	</li>');
+					/*$('#online_friends_list').append(
+    						'<li class="friend-list" id="ol_'+data['u']+'">'+
+							'        <span class="pic" ><img src="images/profile-pic-blank-45x44.png" /></span>'+
+							'        <span class="name-score" >'+
+							'			<span class="name">'+data['n']+'</span>'+
+							'			<span class="points" ><span id="pts_'+data['u']+'">0</span> pts</span>'+
+							'		</span>'+
+							'		<!--<span class="rank" >'+
+							'			2nd'+
+							'		</span>-->'+
+							'	</li>');*/
+					$('#live_count').text($('#live_count').text()-0+1);
+				} else if (data['t'] == 3) {
+                    clearInterval(restartTimerInterval);
+				    //$.colorbox.close();
+                    $('.live-round-over-message-box').fadeOut(function(){
+						if(!gameRestaredOnce){
+							_gaq.push(['_trackEvent', 'gameRestaredOnce', myName, '']);
+							gameRestaredOnce=true;
+						}
+					});
+				    $('.matras-main').hide();
+				    if (currTarget) {
+				        currTarget.parent().removeClass("active");
+				    }
+				    getAndClearCurrWord();
+				    $('#score').text("-");
+    				$('#words_list').html('');
+    				$('#online_friends_list .points span').text('0');
+				    letterUsed = new Array(17);
+					$('#word').val('');
+                    inputBoxBlur();
+					currWord = "";
+					currLetters = data.w;
+					for (i=0; i<data.w.length; i++) {
+						$('#letter'+(i+1)).text(chars[data.w[i]-1]);
+                        $('#letter'+(i+1)).attr('orig_text', chars[data.w[i]-1]);
+                        console.log("char "+(i+1)+": "+chars[data.w[i]-1].charCodeAt(0));
+					}
+                    enableSubmit();
+					startGame(parseInt(data['tm']));
+				} else if (data['t'] == 4) {
+				    timeout =  true;
+                    clearInterval(fireTimerInterval);
+                    clearTimeout(endTimerTimeout);
+					restartGame(data['tm']);
+				} else if (data['t'] == 5) {
+                    if (data['o'] == true) {
+                        $('#pts_'+data['f'][1]).text(($('#pts_'+data['f'][1]).text()-0)+data['s']);
+                        return;
+                    }
+				    var word = Base64.decode(data['w'].replace(encPlusRE,"+").replace(encSlashRE,"/").replace(encEqualToRE,"="));
+					words.push(word);
+                    console.log(data);
+				    if (data['s'] > 0) {
+						correctWords.push(word);
+				        $('#words_list').append('<li>'+word+' - '+data['s']+'</li>');
+				        $('.word-found .scroll-content').jScrollPane({showArrows: true,verticalDragMaxHeight:49});
+				        $('#pts_'+data['f'][1]).text(($('#pts_'+data['f'][1]).text()-0)+data['s']);
+				        $('#hint').text("+"+data['s']+" for "+word);
+				        if (data['f'][1] == myId) {
+				            $('#score').text($('#pts_'+data['f'][1]).text());
+                            runPointsAnimation("pot1",data['s']-0,100,200,150, !$('#mute').hasClass('active'));
+				        }
+				    } else if (data['s'] == -10) {
+						repeatWords.push(word);
+				        $('#hint').text("Repeat: "+word);
+                        runPointsAnimation("repeat",0,100,200,150, !$('#mute').hasClass('active'));
+				    } else {
+						incorrectWords.push(word);
+				        $('#hint').text("Not a word: "+word);
+                        runPointsAnimation("wrong",0,100,200,150, !$('#mute').hasClass('active'));
+				    }
+                
+				} else if (data['t'] == 7) {
+				    $('#ol_'+data['i'][1]).remove();
+				    $('#live_count').text($('#live_count').text()-1);
+				}
+			}
+			
+			function letter_clickHandler(target) {
+				var i;
+				var letId = target.attr("id").substr(6)-0;
+                console.log("letter click handler letter used: "+letterUsed[letId]);	
+				if(!letterClickOnce){
+					_gaq.push(['_trackEvent', 'letter_click', myName, '']);
+					letterClickOnce=true;
+				}
+				if (!timeout && letterUsed[letId]) {
+				    for (i=0;i<halfs.length;i++) {
+						$("#halfs"+i).text(target.attr('orig_text')+halfs[i]);
+					}
+                    var lastCharCode = target.text().charCodeAt([target.text().length-1]);
+                    if (target.text().length > 1 && currLanguage != 1 &&
+                        (lastCharCode != languageConf[currLanguage][4][0].charCodeAt(0)
+                            && lastCharCode != languageConf[currLanguage][4][1].charCodeAt(0))) {
+                        $('#dhalfs1').text(target.text()+languageConf[currLanguage][4][0]);
+                        $('#dhalfs2').text(target.text()+languageConf[currLanguage][4][1]);
+                        $('.matra-addition-top').show();
+                    } else {
+                        $('.matra-addition-top').hide();
+                    }
+					$('#now_akshar').text(target.attr('orig_text'));
+					currTarget = target;
+
+					console.log(currTarget);
+					return false;
+				} else if (!timeout && (wordChainTail == null || (((letId%4!=0 && wordChainTail.id == letId+1) || (letId%4 !=1 && wordChainTail.id  == letId-1) || wordChainTail.id == letId+4 || wordChainTail.id == letId-4 || (letId%4 !=0 && wordChainTail.id == letId-3) || (letId%4 !=1 && wordChainTail.id == letId-5) || (letId%4!=1 && wordChainTail.id == letId+3) || (letId%4!=0 && wordChainTail.id == letId+5))))
+					&& currTarget != target) {
+					currTarget = target;
+					console.log("yers");
+					currTarget.parent().addClass("active");
+					return true;
+				} else {
+					/*if (currTarget != null) {
+						currTarget.parent().removeClass("active");
+					}
+					currTarget = null;*/
+					return null;
+				}
+			}
+			function letter_mouseOverHandler(target) {
+				if (timeout) {
+					return;
+				}
+				var letId = target.attr('id').substr(6)-0;
+				if (wordChainTail == null || (((letId%4!=0 && wordChainTail.id == letId+1) || (letId%4 !=1 && wordChainTail.id  == letId-1) || wordChainTail.id == letId+4 || wordChainTail.id == letId-4 || (letId%4 !=0 && wordChainTail.id == letId-3) || (letId%4 !=1 && wordChainTail.id == letId-5) || (letId%4!=1 && wordChainTail.id == letId+3) || (letId%4!=0 && wordChainTail.id == letId+5)) && !letterUsed[letId]))
+				{
+				    target.parent().addClass("hover");
+				}/* else if (!letterUsed[letId]){
+				    target.parent().removeClass("hover");
+				}*/
+			}
+			
+			function letter_mouseOutHandler(target)
+			{
+				var letId = target.attr('id').substr(6)-0;
+				if (!letterUsed[letId] && target != currTarget) {
+					target.parent().removeClass("hover");
+				}
+			}
+			function halfs_clickHandler(target) {
+				if (timeout) {
+					return;
+				}
+				console.log("halfs click handler");
+				var letId = currTarget.attr('id').substr(6)-0;
+				if (!letterUsed[letId]) {
+				    console.log("letter used false");
+				    letterUsed[letId] = true;
+				    if (wordChainTail == null) {
+					    wordChainTail = new Object();
+					    wordChainTail.id = letId;
+					    wordChainTail.next = null;
+					    wordChainTail.prev = null;
+					    wordChainTail.letter = target.text();
+				    } else {
+					    wordChainTail.next = new Object();
+					    wordChainTail.next.prev = wordChainTail;
+					    wordChainTail = wordChainTail.next;
+					    wordChainTail.id = letId;
+					    wordChainTail.next = null;
+					    wordChainTail.letter = target.text();
+				    }
+                    inputBoxFocus();
+				    $("#word").val($('#word').val()+target.text());
+				    currWord = $('#word').val();
+				    currTarget.text(target.text());
+				    $('.matras-main').fadeOut();
+				    currTarget = null;
+			    } else {
+					matraClickedList.push(target.text());
+					if(!matraClickOnce){
+						_gaq.push(['_trackEvent', 'matraClicked', myName, '']);
+						matraClickOnce=true;
+					}
+				    var temp;
+				    temp = wordChainTail;
+				    var word = "";
+				    while (temp != null) {
+				        if (temp.id == letId) {
+				            temp.letter = target.text();
+				            currTarget.text(target.text());
+				        }
+					    word = temp.letter+word;
+					    temp = temp.prev;
+				    }
+                    inputBoxFocus();
+				    $('#word').val(word);
+				    currWord = word;
+				    $('.matras-main').fadeOut();
+				    currTarget = null;
+                }
+                console.log(currTarget);
+            }
+            
+			var isShift = false;
+			function wordText_keyUpHandler(event)
+			{
+			    $('.matras-main').hide();
+			    currWord = $('input#word').val();
+			    console.log(currWord);
+				highlightCurrWord();
+				/*if (event.keyCode == 13) {
+                    submitWord();
+				}*/
+			}
+			
+			function InCurrLangConsonantBounds(charCode) {
+			    if ((currLanguage == 0 && charCode > 2324 && charCode < 2362) ||
+			        (currLanguage == 1 && charCode > 2964 && charCode < 3002) ||
+			        (currLanguage == 2 && charCode > 2452 && charCode < 2490) ||
+			        (currLanguage == 3 && charCode > 3220 && charCode < 3258)) {
+			        return true;
+			    } else {
+			        return false;
+			    }
+			}
+			
+			function CurrLangConsonantIndex(charCode) {
+    			var indexId = 0;
+			    if (currLanguage == 0) {
+			        //if (2325+i == 2345 || 2325+i == 2353 || 2325+i == 2355 || 2325+i == 2356) continue;
+			        if (charCode > 2356) {
+						indexId = charCode - 2324 - 4;
+					} else if (charCode > 2353) {
+						indexId = charCode - 2324 - 2;
+					} else if (charCode > 2345) {
+						indexId = charCode - 2324 - 1;
+					} else {
+						indexId = charCode - 2324;
+					}
+					return indexId;
+				} else if (currLanguage == 1) {
+				    return tamil_chars.join("").indexOf(String.fromCharCode(charCode)) + 1;
+				} else if (currLanguage == 2) {
+                    //if (2453+i == 2473 || 2453+i == 2481 || (2453+i >= 2483 && 2453+i <= 2485)) continue;
+                    if (charCode > 2485) {
+                        indexId = charCode - 2452 - 5;
+                    } else if (charCode > 2481) {
+                        indexId = charCode - 2452 - 2;
+                    } else if (charCode > 2473) {
+                        indexId = charCode - 2452 - 1;
+                    } else {
+                        indexId = charCode - 2452;
+                    }
+                    return indexId;
+				} else if (currLanguage == 3) {
+				    //if (3221+i == 3241 || 3221+i == 3252) continue;
+				    if (charCode > 3252) {
+				        indexId = charCode - 3220 - 2;
+				    } else if (charCode > 3241) {
+				        indexId = charCode - 3220 - 1;
+			        } else {
+			            indexId = charCode - 3220;
+		            }
+		            return indexId;
+				}
+			}
+			
+			function IsCurrLangVowel(charCode) {
+			    if (currLanguage == 0) {
+			        if ((charCode > 2365 && charCode < 2382) || charCode == 2305 || charCode == 2306) {
+                        return true;
+                    }
+                } else if (currLanguage == 1) {
+                    if (charCode > 3005 && charCode < 3021) {
+                        return true;
+                    }
+                } else if (currLanguage == 2) {
+                    //2493, 2510 2433 2434
+                    if ((charCode > 2493 && charCode < 2510) || charCode == 2433 || charCode == 2434) {
+                        return true;
+                    }
+                } else if (currLanguage == 3) {
+                    //3261 3278 3202
+                    if ((charCode > 3261 && charCode < 3278) || charCode == 3202) {
+                        return true;
+                    }
+                }
+                return false;
+			}
+
+			function highlightCurrWord() {
+				var currWordArray= new Array();
+				var currAddonArray = new Array();
+				var latestIndex = -1;
+				for(var i=0;i<currWord.length;i+=1) {
+				    if (InCurrLangConsonantBounds(currWord.charCodeAt(i))) {
+					//if (currWord.charCodeAt(i)>2324 && currWord.charCodeAt(i)<2362) {
+						var a = {};
+						currWordArray.push(a);
+						a.indexId = CurrLangConsonantIndex(currWord.charCodeAt(i));
+						
+						
+						a.addonStr = "";
+						latestIndex = currWordArray.length - 1;
+					} else if (latestIndex != -1 && IsCurrLangVowel(currWord.charCodeAt(i))) {
+						currWordArray[latestIndex].addonStr += currWord.charAt(i);
+					} else {
+					    currWordArray = []
+					    break;
+					}
+				}
+				wordChainTail = null;
+				for (i=0;i<16;i++) {
+					currTarget = $('#letter'+(i+1));
+					currTarget.parent().removeClass("active");
+					currTarget.text(currTarget.attr("orig_text"));
+					letterUsed[(i+1)] = false;
+				}
+				currTarget = null;
+				if (currWordArray.length != 0 && findWordChain(currWordArray,0,-1)) {
+					currTarget = null;
+                    enableSubmit();
+					return true;
+				}
+				if (currWordArray.length != 0 || $('input#word').val().length > 0) {
+                    disableSubmit();
+				} else {
+				    enableSubmit();
+			    }
+				return false;
+			}
+			
+			function findWordChain(currWordArray,idx,ppos) {
+				var pos = -1;
+				pos = currLetters.indexOf(currWordArray[idx].indexId,pos+1);
+				while (pos != -1) {
+					if (wordChainTail == null || 
+						(((pos+1)%4!=0 && (ppos+1) == pos+1+1) || 
+							((pos+1)%4 !=1 && (ppos+1)  == pos+1-1) || 
+							   ppos+1 == pos+1+4 || ppos+1 == pos+1-4 || 
+							   ((pos+1)%4 !=0 && ppos+1 == pos+1-3) || 
+							   ((pos+1)%4 !=1 && (ppos+1) == pos+1-5) || 
+							   ((pos+1)%4!=1 && ppos+1 == pos+1+3) || 
+							   ((pos+1)%4!=0 && ppos+1 == pos+1+5))) {
+						var letId = pos+1;
+						currTarget = $('#letter'+(letId));
+						console.log(currTarget);
+						currTarget.parent().addClass("active");
+						currTarget.text(chars[currWordArray[idx].indexId-1]+currWordArray[idx].addonStr);
+						console.log(letId);
+						letterUsed[letId] = true;
+						if (wordChainTail == null) {
+							wordChainTail = new Object();
+							wordChainTail.id = letId;
+							wordChainTail.next = null;
+							wordChainTail.prev = null;
+							wordChainTail.letter = chars[currWordArray[idx].indexId-1]+currWordArray[idx].addonStr;
+						} else {
+							wordChainTail.next = new Object();
+							wordChainTail.next.prev = wordChainTail;
+							wordChainTail = wordChainTail.next;
+							wordChainTail.id = letId;
+							wordChainTail.next = null;
+							wordChainTail.letter = chars[currWordArray[idx].indexId-1]+currWordArray[idx].addonStr;
+						}
+						if (idx == currWordArray.length - 1 || findWordChain(currWordArray,idx+1,pos)) {
+							return true;
+						}
+						currTarget = $('#letter'+(letId));
+    					currTarget.parent().removeClass("active");
+    					currTarget.text(chars[currWordArray[idx].indexId-1]);
+						wordChainTail = wordChainTail.prev;
+						letterUsed[letId] = false;
+					}
+					pos = currLetters.indexOf(currWordArray[idx].indexId,pos+1); 
+				}
+				return false;
+			}
+			
+			function gmgOnError(errno) {
+				//TODO
+			}
+			function gmgOnClose() {
+				//TODO
+			}
+			function gameInit() {
+				$.colorbox.close();
+			}
+			var gameType = 0;
+			function liveInit() {
+				gameType = 2;
+				gmgInit();
+			}
+			function soloInit() {
+				gameType = 1;
+				gmgInit();
+			}
+            function gmgInit() {
+				var contime = 0;
+				var contimesi = setInterval(function(){
+					contime++;
+				},1000);
+                inited = true;
+				$.colorbox({
+					inline:true, 
+					height:"60px",
+					href:"#connecting",
+					escKey:false, 
+					overlayClose:false,
+					onLoad: function() {
+						$('#cboxClose').remove();
+					},
+					onClosed: function() {
+					  _gaq.push(['_trackEvent', 'connecting_Close', myName, contime.toString()]);
+					  if(contime<10){
+					  	_gaq.push(['_trackEvent', 'connect_fast', myName, contime.toString()]);
+					  }else{
+					  	_gaq.push(['_trackEvent', 'connect_slow', myName, contime.toString()]);
+					  }
+					  clearInterval(contimesi);
+					  contime = 0;
+					}
+				});
+                $('#preload_text').text("Connecting...");
+				$("#game_menu").fadeOut("fast");
+				$("#game_play").fadeIn("slow", function() {
+                    //alert("caruosel init");
+                    jQuery('.scroller-friends-content').jcarousel({
+                        vertical: true,
+                        scroll: 1,
+                        initCallback: mycarousel_initCallback,
+                        buttonNextHTML: null,
+                        buttonPrevHTML: null       					
+                    });
+                });
+				$(".header-panel-right").fadeOut("fast");
+                $(".header-panel-left").fadeOut("fast");
+				$(".header-panel-center").fadeIn("slow");
+                $(".top-nav-left").fadeIn("slow");
+                $(".top-nav-right").fadeIn("slow");
+                GamoogaClient.init("./js/sock_bridge.swf",gmgOnInit);
+            }
+            function gmgReInit() {
+                $.colorbox({inline:true, height:"60px",href:"#connecting",escKey:false, overlayClose:false,onLoad: function() {$('#cboxClose').remove();}});
+                $('#preload_text').text("Connecting...");
+                timeout = true;
+                letterUsed = new Array(17);
+                $('#online_friends_list').html('');
+                clearInterval(fireTimerInterval);
+                clearTimeout(endTimerTimeout);
+                clearInterval(restartTimerInterval);
+                gmgOnInit();
+            }
+			function initGame() {
+				gc.send('{"t":1}');
+				$.colorbox.close();
+			}
+			function startGame(secs) {
+			    timeout = false;
+			    remainingTime = secs;
+				startTimer(remainingTime);
+			}
+			function startTimer(secs) {
+			    endTimerTimeout = setTimeout(endTimer,secs*1000);
+			    fireTimerInterval = setInterval(fireTimer,1000);
+			}
+			function fireTimer() {
+				remainingTime = remainingTime - 1;
+                if (remainingTime < 0) remainingTiome = 0;
+				var secs = remainingTime % 60;
+				var mins = parseInt(remainingTime / 60);
+				var secss;
+				if (secs < 10) {
+					secss = "0";
+				} else {
+					secss = "";
+				}
+				$('#timer').text("0"+mins+":"+secss+secs);
+                $('#timer-bottom').text("0"+mins+":"+secss+secs);
+                if (mins == 0 && secs < 10) {
+                    $('.bottom-timer label,.bottom-timer span').css('color','#ff0902');
+                } else {
+                    $('.bottom-timer label,.bottom-timer span').css('color','#fff992');
+                }
+			}
+			function endTimer() {
+			    timeout = true;
+			    console.log(fireTimerInterval);
+			    clearInterval(fireTimerInterval);
+			}
+			function restartGame(secs) {
+				if(!gameEndOnce){
+					_gaq.push(['_trackEvent', 'gameEndOnce', myName, '']);
+					gameEndOnce=true;
+				}
+				restartRemTime = secs;
+				var ctotscore = $('.myscore span').text();
+
+				var sfuser, gbdict, unletters, unmatras, enEngaged, iatime;
+				var perDict = (correctWords.length/(correctWords.length+incorrectWords.length))*100;
+				
+				if(words.length<10){
+					_gaq.push(['_trackEvent', 'Slow', myEmail, (words.length).toString()]);
+				}else{
+					_gaq.push(['_trackEvent', 'Fast', myEmail, (words.length).toString()]);
+				}
+				console.log('words.length : '+words.length);
+				
+				if(perDict<50){
+					_gaq.push(['_trackEvent', 'BadDictionary', myEmail, perDict.toString()]);
+				}else{
+					_gaq.push(['_trackEvent', 'GoodDictionary', myEmail, perDict.toString()]);
+				}
+				console.log('perDict : '+perDict);
+				
+				if(matraClickedList.length<5){
+					_gaq.push(['_trackEvent', 'NotUndMatras', myEmail, (matraClickedList.length).toString()]);
+				}else{
+					_gaq.push(['_trackEvent', 'UndMatras', myEmail, (matraClickedList.length).toString()]);
+				}
+				console.log('matraClickedList.length : '+(matraClickedList.length).toString());
+				
+				if(letterClickedList.length<30){
+					_gaq.push(['_trackEvent', 'NotUndLetters', myEmail, (letterClickedList.length).toString()]);
+				}else{
+					_gaq.push(['_trackEvent', 'UndLetters', myEmail, (letterClickedList.length).toString()]);
+				}
+				console.log('letterClickedList.length : '+(letterClickedList.length).toString());
+				
+				if(totIdleTime>=90){
+					_gaq.push(['_trackEvent', 'Idle', myEmail, totIdleTime.toString()]);
+				}else{
+					_gaq.push(['_trackEvent', 'Active', myEmail, totIdleTime.toString()]);
+				}
+				console.log('totIdleTime : '+totIdleTime.toString());
+				
+				noOfGameEnded=noOfGameEnded+1;
+
+                $('#restart_timer').text(secs+"s");
+                $('#restart_score').text($('#score').text());
+                $('.fb').attr('href',"http://www.facebook.com/sharer.php?u="+encodeURIComponent("http://"+window.location.host)+"/?s=1&t="+encodeURIComponent("MadRat Games - Word Matki")+"&d="+encodeURIComponent("I have scored "+$('#score').text()+"pts in WordMatki. Can you beat me?"));
+                $('.tw').attr('href',"https://twitter.com/share?url="+encodeURIComponent("http://"+window.location.host)+"&text="+encodeURIComponent("I have scored "+$('#score').text()+"pts in WordMatki. Can you beat me?"));
+                $("g:plusone").attr('href',"http://"+window.location.host+"/?s=1&t=MadRat Games - Word Matki&d="+"I have scored "+$('#score').text()+"pts in WordMatki. Can you beat me?");
+                $(".live-round-over-message-box").css({left:"63%",top:"150px"}).fadeIn();
+				//$.colorbox({left:"63%",top:"150px",innerHeight:"287px", height:"325px",scrolling:false,inline:true, href:"#restart",escKey:false, overlayClose:false,onLoad: function() {$('#cboxClose').remove();$('#cboxLoadedContent').css('margin-bottom','0px');$('#cboxLoadedContent').height($('#cboxLoadedContent').children(":first").height());}});
+				restartTimerInterval = setInterval(fireRestartTimer,1000);
+			}
+			function fireRestartTimer()
+			{
+				restartRemTime = restartRemTime - 1;
+                if (restartRemTime < 0) restartRemTime = 0;
+				$('#restart_timer').text(restartRemTime+"s");
+				if (restartRemTime == 0) clearInterval(restartTimerInterval);
+			}
+			function submitWord() {
+			
+				if(!wordSubmitedOnce){
+					_gaq.push(['_trackEvent', 'wordSubmitedOnce', myName, '']);
+					wordSubmitedOnce=true;
+				}
+                if ($('#submitBut').hasClass("disabled")) {
+                    $('#hint').text("Word not found: "+$('#word').val());
+                    getAndClearCurrWord();
+                    letterUsed = new Array(17);
+                    $('.matras-main').hide();
+                    return;
+                }
+                var word = getAndClearCurrWord();
+				console.log(word);
+				console.log(myName);
+				console.log("////11/------------------------------------------------------------////");
+				$.ajax({
+					type:'GET',
+					url: "http://madratgames.com/wm-mrg/word_to_dictionary_test.php",
+					data: {word: word, user: myName},
+					dataType: jsonp,
+					contentType: "application/json; charset=utf-8",
+					success:function(html) { 
+					console.log("Word sent to Dictionary");
+				},
+				error: function(){
+						console.log("Unable to Load!");
+					},
+					complete: function(){
+						console.log("Word Added to dictionary")
+					}
+				});
+                word = word.replace(/(^\s*)|(\s*$)/gi,"");
+			    var outstr = Base64.encode(word);
+				gc.send('{"t":2,"w":"'+outstr.replace(plusRE,"%2B").replace(slashRE,"%2F").replace(equaltoRE,"%3D")+'"}');
+				letterUsed = new Array(17);
+                $('.matras-main').hide();
+			}
+            function resetBoard() {
+                getAndClearCurrWord();
+                letterUsed = new Array(17);
+                $('.matras-main').hide();
+                currTarget = null;
+                enableSubmit();
+            }
+            
+            function enableSubmit() {
+                $('#submitBut').removeAttr("disabled");
+                $('#submitBut').removeClass("disabled");
+                $('.board-submit-btn').removeClass("disabled");
+            }
+            
+            function disableSubmit() {
+                $('#submitBut').attr("disabled","disabled");
+                $('#submitBut').addClass("disabled");
+                $('.board-submit-btn').addClass("disabled");
+            }
+            
+			function clearCurrWordUntil(letId) {
+				var temp;
+				temp = wordChainTail;
+				var word = "";
+				while (temp != null && temp.id != letId) {
+					letterUsed[temp.id] = false;
+					$('#letter'+temp.id).parent().removeClass("active");
+					$('#letter'+temp.id).text($('#letter'+temp.id).attr("orig_text"));
+					temp = temp.prev;
+				}
+				wordChainTail = temp;
+				while (temp != null) {
+					word = temp.letter+word;
+					temp = temp.prev;
+				}
+                inputBoxFocus();                
+				$('#word').val(word);
+				currWord = $('#word').val();
+			}
+			function getAndClearCurrWord() {
+				var temp;
+				temp = wordChainTail;
+				var word = "";
+				while (temp != null) {
+					word = temp.letter+word;
+					$('#letter'+temp.id).parent().removeClass("active");
+					$('#letter'+temp.id).text($('#letter'+temp.id).attr("orig_text"));
+					temp = temp.prev;
+				}
+				$('#word').val("");
+                inputBoxBlur();
+				currWord = "";
+				wordChainTail = null;
+				return word;
+			}
+			$(document).ready(function() {
+		        //$.colorbox({left:"63%",top:"150px",innerHeight:"287px", height:"325px",scrolling:false,inline:true, href:"#restart",escKey:false, overlayClose:false,onLoad: function() {$('#cboxClose').remove();$('#cboxLoadedContent').css('margin-bottom','0px');$('#cboxLoadedContent').height($('#cboxLoadedContent').children(":first").height());}});
+				$.colorbox({inline:true, height:"60px",href:"#connecting",escKey:false, overlayClose:false,onLoad: function() {$('#cboxClose').remove();}});
+				loadImages(document, gameInit);
+				$.getJSON("http://"+SERVER+"/aksharit_get_user_data/"+myId+"/?callback=?",
+					function(data) {
+						data['l']=0;
+						console.log(data['w']);
+						$('#iq').text("Score: "+data['s']);
+						$('#rank').text(data['g']);
+						$('#totalscore').text(data['w']);
+						$('#name').text(myName);
+                        if (data['l'] == -1) {
+                            $(".choose-language-start-up").show();
+                        } else {
+                            $('.choose-language label').html(langNames[data['l']]);
+                            setLanguage(data['l']);
+                        }
+					}
+				);
+			});
+            function inputBoxBlur() {
+                // no focus check because inputBoxBlur is used in many other places
+                if ($('input#word').val() == "" && !$('input#word').is(":focus")) {
+                    $('input#word').val("Type words here");
+                    $('input#word').css("color","#666");
+                    $('input#word').css("font-style","");
+                }
+                $('input#word').css("font-style","normal");
+            }
+            
+            function inputBoxFocus() {
+                if ($('input#word').val() == "Type words here") {
+                    $('input#word').val("");
+                }
+                $('input#word').css("color","#000");      
+                $('input#word').css("font-style","normal");
+            }
+            
+			function loadImages(document, callback) {
+
+                var imgs = {};
+                var i, j, remaining = 0, total = 0;			
+    			function handler(el, event) {
+                    remaining -= 1;
+                    if (remaining == 0 && !callback.done
+                     && typeof callback === "function") {
+                        callback.done = true;
+                        callback();
+                    }
+                    //$('#preload_remain').text(total - remaining);
+                    $('#preload_percent').text(parseInt(100 - (remaining*100/total))+"%");
+                }
+
+                // adds the image to the hash table
+                function addImage(src, img) {
+                    if (!imgs[src]) {
+                      remaining++;
+                      total++;
+                      img = img || new Image();
+                      img.onload  = handler;
+                      img.onerror = handler;
+                      img.src = img.src || src;
+                      // add to the hash table
+                      imgs[src] = img;
+                      //$('#preload_total').text(total);
+                    }
+                }
+		
+			    var ss = document.styleSheets;
+				if(ss!=null){
+					for (var i = 0; i < ss.length; ++i)
+					{
+						var css = ss[i];
+						var pos = css.href.lastIndexOf("/");
+						var cssDir = (pos != -1) ? css.href.substring(0, pos + 1) : "";
+						var rules  = css.cssRules || css.rules;
+						// NOTE: j=1, because moz gives error for style.backgroundImage
+						// for font-face rule which is the first one
+						if(ss[i].cssRules!=null){
+							for (var j = 1; j < ss[i].cssRules.length; ++j)
+							{
+								var style = rules[j].style;
+								//console.log(style);
+								var img = style.backgroundImage;
+								//console.log(img);
+								if (img.indexOf("url(") == 0) {
+									var filename = img.substring(4, img.length - 1).replace(/['"]/g,"");
+									if (filename) {
+										if (filename.indexOf("http://") != 0
+										 && filename.indexOf("/") != 0) {
+											filename = cssDir + filename;
+										}
+										addImage(filename);
+									}
+								}
+							}
+						}
+					}
+				}
+            }
+            // End Gamooga API functions
+            
+			function rePOS_UI(){
+				var wWidth=$(window).width();
+				var wHeight=$(window).height();
+				
+				var base_frame=$(".base-frame");
+				
+				var pillar_top=$(".header-panel-center", base_frame);
+				
+				var pillar_bg=$(".pillar-bg", base_frame);
+				
+				var pillar_bottom=$(".pillar-bottom", base_frame);
+				
+				var pillar_bottom_splash=$(".pillar-bottom.splash", base_frame);
+				
+				//$(base_frame).width(wWidth).height(wHeight); 
+				
+				var pillar_top_height=$(pillar_top).height();
+						
+				var pillar_bottom_width= 636;//$(pillar_bottom).width();
+                // somehow .width doesnot give correct value, may be because its hidden the first time its read
+				
+				$(pillar_bottom).css({left:(wWidth/2)-(pillar_bottom_width/2)});
+				
+				//for splash screen
+				$(pillar_bottom_splash).css({left:"auto",right:0});
+				
+				//set pillar bg
+				
+				$(pillar_bg).css({height:wWidth-pillar_top_height});
+				$(".pillar",pillar_bg).css({height:wWidth-pillar_top_height});
+				
+				$(".game-selection").css({top:(wHeight/2)-($(".game-selection").height()/2)+120});
+			}
+			
+			var resizeTimer;
+			$(window).resize(function() {
+			    clearTimeout(resizeTimer);
+			    resizeTimer = setTimeout(rePOS_UI, 100);
+			    
+			});
+		
+			$(function(){
+				
+				rePOS_UI();
+                $(document).keydown(function(event) {
+                    if (event.keyCode == '13' && !$('input#word').is(":focus")) {
+                        submitWord();
+                    } else if (event.keyCode == '27') {
+                        if ($(".matras-main").is(":visible")) {
+                            $(".matras-main").hide();
+                            currTarget = null;
+                        } else {
+                            resetBoard();
+                        }
+                    }
+                });
+                
+                $('.choose-language .lang-menu ul li a').click(function() {
+                    var idx = $(this).parent().index();
+                    setLanguage(idx);
+                    $.getJSON("http://"+SERVER+"/aksharit_update_user_lang/"+myId+"/?callback=?&lang="+idx,
+                        function(data) {
+                            console.log(data['s']);
+                            $.getJSON("http://"+SERVER+"/aksharit_get_user_data/"+myId+"/?callback=?",
+                                function(data) {
+                                    console.log(data['w']);
+                                    $('#iq').text("Score: "+data['s']);
+                                    $('#rank').text(data['g']);
+                                    $('#totalscore').text(data['w']);
+                                    $('#name').text(myName);
+                                }
+                            );
+                        }
+                    );
+                    if (inited) {
+                        gc.close();
+                        resetBoard();
+                        gmgReInit();
+                    }
+                });
+                $('.top-nav-left #play_solo').click(function() {
+                    $.getJSON("http://"+SERVER+"/aksharit_get_user_data/"+myId+"/?callback=?",
+                        function(data) {
+                            console.log(data['w']);
+                            $('#iq').text("Score: "+data['s']);
+                            $('#rank').text(data['g']);
+                            $('#totalscore').text(data['w']);
+                            $('#name').text(myName);
+                        }
+                    );
+                    gameType=1;
+                    if (inited) {
+                        gc.close();
+                        resetBoard();
+                        gmgReInit();
+                    }
+                });
+                $('.top-nav-left #live_game').click(function() {
+                    $.getJSON("http://"+SERVER+"/aksharit_get_user_data/"+myId+"/?callback=?",
+                        function(data) {
+                            console.log(data['w']);
+                            $('#iq').text("Score: "+data['s']);
+                            $('#rank').text(data['g']);
+                            $('#totalscore').text(data['w']);
+                            $('#name').text(myName);
+                        }
+                    );
+                    gameType=2;
+                    if (inited) {
+                        gc.close();
+                        resetBoard();
+                        gmgReInit();
+                    }
+                });
+                $('.choose-language-start-up .options ul li a').click(function() {
+                    //$('.word-found.languages .content .scroll-content ul li a').removeClass("dark");
+                    //$(this).addClass("dark");
+                    //$('.language-selected span').html($(this).html());
+                    var idx = $(this).parent().index();
+                    setLanguage(idx);
+                    $.getJSON("http://"+SERVER+"/aksharit_update_user_lang/"+myId+"/?callback=?&lang="+idx,
+                        function(data) {
+                            console.log(data['s']);
+                            $.getJSON("http://"+SERVER+"/aksharit_get_user_data/"+myId+"/?callback=?",
+                                function(data) {
+                                    console.log(data['w']);
+                                    $('#iq').text("Score: "+data['s']);
+                                    $('#rank').text(data['g']);
+                                    $('#totalscore').text(data['w']);
+                                    $('#name').text(myName);
+                                }
+                            );
+
+                        }
+                    );
+                });
+                //scroll
+				$('.word-found .scroll-content').jScrollPane({showArrows: true,verticalDragMaxHeight:49});
+				
+				//word-found
+				$(".word-found a.btn-action").click(function(){
+					if($(this).hasClass("expand")){
+						$(this).removeClass("expand").addClass("collapse")
+						$(".word-found").animate({left:'-='+$(".word-found .content").width()},1000)
+					}
+					else{
+						$(this).removeClass("collapse").addClass("expand")
+						$(".word-found").animate({left:'+='+$(".word-found .content").width()},1000)
+					}
+					
+				});
+				
+				//online friends
+				$(".online-friends a.btn-action").click(function(){
+					if($(this).hasClass("expand")){
+						$(this).removeClass("expand").addClass("collapse")
+						$(".online-friends").animate({right:'-='+$(".online-friends .content").width()},1000)
+					}
+					else{
+						$(this).removeClass("collapse").addClass("expand")
+						$(".online-friends").animate({right:'+='+$(".online-friends .content").width()},1000)
+					}
+					
+				})
+				
+				//board-bg
+				$(".board-bg ul a").mouseout(function(e){
+				    if (!matraMouseDown) {
+				        console.log("mouse OUT handler");
+    				    letter_mouseOutHandler($(this).children(":first"));
+    				}
+				});
+				
+				var subMatraTimer;
+				var matraMouseDown;
+				
+				$(".board-bg ul a").mouseover(function(e){
+				    if (!matraMouseDown) {
+				        console.log("letter_mouseOver");
+    				    letter_mouseOverHandler($(this).children(":first"));
+    				    return;
+    				}
+				    clearTimeout(subMatraTimer);
+					
+					e.preventDefault();
+					console.log("letter click");
+					if (letter_clickHandler($(this).children(":first"))) {
+					    halfs_clickHandler($(this).children(":first"));
+				    } else {
+                        clearCurrWordUntil($(this).children(":first").attr("id").substr(6)-0);
+                    }
+			    });
+				
+				$(".board-bg ul a").mousedown(function(e){
+                    if ($('#submitBut').hasClass("disabled")) {
+                        resetBoard();
+                    }
+				    letter_mouseOutHandler($(this).children(":first"));
+				    clearTimeout(subMatraTimer);
+					
+					e.preventDefault();
+					var tf = letter_clickHandler($(this).children(":first"));
+					if (tf === true) {
+					    matraMouseDown = true;
+					    halfs_clickHandler($(this).children(":first"));
+				    } else if (tf === false) {
+				        pos=$(this).position();
+
+					    //reset sub matra style
+					    $(".matras-main .sub-matra-links-main").hide();
+					    $(".matras-main .matras .hover-bg img").attr({src:"images/transparency-0-bg.png"});
+                        /*if (currLanguage != 1) {
+                            $(".matra-addition-top").show();
+                        }*/
+					    $(".matras-main .matra-addition-top .hover-bg img").attr({src:"images/transparency-0-bg.png"});				
+                        $(".matras-main .matras .matra, .matras-main .matra-addition-top .matra").css({opacity:1});
+
+					    $(".matras-main").css({top:pos.top+9,left:pos.left+105}).hide().fadeIn();
+				    } else if (tf === null) {
+                        resetBoard();
+                    }
+			    });
+				
+				$(".board-bg").mouseup(function(e){
+				    matraMouseDown = false;
+			    });
+				
+				/*$(".board-bg ul a").mousedown(function(e){
+					
+					clearTimeout(subMatraTimer);
+					
+					e.preventDefault();
+					if (letter_clickHandler($(this).children(":first"))) {
+					pos=$(this).position();
+					
+					//reset sub matra style
+					$(".matras-main .sub-matra-links").hide();
+					$(".matras-main .matras-expanded").hide();
+					$(".matras-main .matras .hover-bg img").attr({src:"images/transparency-0-bg.png"});
+					$(".matras-main .matras .matra").css({opacity:1});
+					
+					
+					$(".matras-main").css({top:pos.top+9,left:pos.left+105}).hide().fadeIn();
+					}
+					
+				});*/
+				/*$(".board-bg ul a").mousedown(function(e){
+					clearTimeout(subMatraTimer);
+					e.preventDefault();
+					if (letter_clickHandler($(this).children(":first"))) {
+					    pos=$(this).position();
+					
+					    $(".matras-main").css({top:pos.top+10,left:pos.left+100}).hide().fadeIn();
+					
+					    $(".matras-main a.expand").unbind("click").click(function(){
+						
+						    $(".matras-main .matras").toggleClass("expanded");
+						    $(".matras-main .matras .matra").toggle();
+						
+						    $(".matras-main .matras-expanded").slideToggle();
+						
+					    });
+					}
+					
+				});*/
+                $('.btn-reset').click(function() {
+                    resetBoard();
+                });
+				$('#now_akshar').click(function() {
+				    halfs_clickHandler($(this));
+				    $(".matras-main").fadeOut("fast");
+				});
+				$('.matras-main .matra').mouseup(function(e) {
+				    e.preventDefault();
+                    if ($(this).attr("id").substring(0,1) == "d") {
+                        console.log("!!!!!!!!!! 3");
+                        halfs_clickHandler($('#dhalfs'+(1+($(this).index()))));
+                    } else {
+                        console.log("!!!!!!!!!! 1");
+                        halfs_clickHandler($('#halfs'+(($(this).index()))));
+                    }
+                    
+				});
+				$('.matras-main .sub-matra-links map area').mouseup(function (e) {
+    				e.preventDefault();
+				    halfs_clickHandler($('#halfs'+(7+($(this).index()))));
+                    console.log("!!!!!!!!!! 2");
+				});
+				$('.matras-main .matra-addition-top map area').mouseup(function (e) {
+                    e.preventDefault();
+				    halfs_clickHandler($('#dhalfs'+(1+($(this).index()))));
+                    console.log("!!!!!!!!!! 3");
+				});
+				$('input#word').keyup(function(e) {
+				    wordText_keyUpHandler(e);
+				});
+				$('input#word').blur(function(e) {
+                    inputBoxBlur();
+				});
+				$('input#word').focus(function(e) {
+                    inputBoxFocus();
+				});
+				
+				/*$(".board-bg .akshar-map-holder map area").hover(function(){
+					idx=$(this).index();
+					$(".board-bg ul a:eq("+idx+")").addClass("hover");
+				},function(){
+					$(".board-bg ul a:eq("+idx+")").removeClass("hover");
+				});*/
+                
+                $(".board-bg .akshar-map-holder map area").mouseout(function(e){
+					idx=$(this).index();
+                    $(".board-bg ul li a:eq("+idx+")").trigger('mouseout');
+                });
+                
+                $(".board-bg .akshar-map-holder map area").mouseover(function(e){
+					idx=$(this).index();
+                    $(".board-bg ul li a:eq("+idx+")").trigger('mouseover');
+                });
+                
+                $(".board-bg .akshar-map-holder map area").mouseup(function(e){
+					idx=$(this).index();
+                    $(".board-bg ul li a:eq("+idx+")").trigger('mouseup');
+                });
+                
+				$(".board-bg .akshar-map-holder map area").mousedown(function(e){
+					idx=$(this).index();
+                    e.preventDefault();
+                    $(".board-bg ul li a:eq("+idx+")").trigger('mousedown');
+				});
+				
+				$(".matras-main a.expand, .matras-main .matras-expanded a.matra, .matras-main .sub-matra-links map area").hover(function(){
+																			  
+						clearTimeout(subMatraTimer);													  
+                        
+						//show submatras
+						$(".matras-main .sub-matra-links-main").show();							
+                        
+						$(".matras-main .matras .matra, .matras-main .matra-addition-top .matra").css({opacity:.2});						
+						
+						$(".matras-main .matras .hover-bg img").attr({src:"images/m-grey.png"});												
+                        $(".matras-main .matra-addition-top .hover-bg img").attr({src:"images/matra-addition-matra-deactive.png"});							
+																								
+					},
+					function(){
+						
+						subMatraTimer=window.setTimeout(function(){
+																 $(".matras-main .sub-matra-links-main").hide();
+																 
+																 $(".matras-main .matras .hover-bg img").attr({src:"images/transparency-0-bg.png"});
+                                                                 
+                                                                 $(".matras-main .matra-addition-top .hover-bg img").attr({src:"images/transparency-0-bg.png"});
+																 $(".matras-main .matras .matra,.matras-main .matra-addition-top .matra").css({opacity:1});		
+																 
+																 },200);
+						
+						
+						
+					}
+					);
+				
+				///matras hover
+				$(".matras-main .matras .akshars a.matra, .matras-main .matras .hover-bg map area.matra").hover(function(){
+					idx=$(this).index()+1;
+					
+					$(".matras-main .matras .hover-bg img").attr({src:"images/m-"+idx+".png"});
+					
+				},
+				function(){
+					$(".matras-main .matras .hover-bg img").attr({src:"images/transparency-0-bg.png"});
+					}
+				);
+				
+                //added on 8th Oct 2011// matra additio top hover
+				$(".matras-main .matra-addition-top .akshars a.matra, .matras-main .matra-addition-top .hover-bg map area").hover(function(){
+					idx=$(this).index()+1;					
+					$(".matras-main .matra-addition-top .hover-bg img").attr({src:"images/matra-addition-matra-hover-"+idx+".png"});					
+				},
+				function(){
+					$(".matras-main .matra-addition-top .hover-bg img").attr({src:"images/transparency-0-bg.png"});
+					}
+				)
+				//added on 8th Oct 2011// matra additio top hover END
+                
+				//sub matra hover
+				$(".matras-main .matras-expanded a.matra, .matras-main .sub-matra-links map area").hover(function(){
+					idx=$(this).index()+1;
+					console.log(idx)
+					
+                    sm_rel=$(this).parents(".sub-matra-links-main").attr("rel");
+                    
+                    $(".matras-main .matras-expanded .sub-matra-hover").append('<img src="images/'+sm_rel+"-"+idx+'.png" />');
+					
+				},
+				function(){
+						$(".matras-main .matras-expanded .sub-matra-hover").html("");
+					}
+				);
+				
+				//keyboard help
+				keyboardHelpBox=$(".keyboard-help-box");
+				$("#keyboard-help").click(function(){
+										
+					keyboardHelpBoxH=$(keyboardHelpBox).height();
+					keyboardHelpBoxW=$(keyboardHelpBox).width();
+					
+					off=$(this).offset();
+					
+					$(this).toggleClass("active");
+					
+					$(keyboardHelpBox).css({top:off.top-keyboardHelpBoxH,left:off.left-($(keyboardHelpBox).width()/2)+30}).toggle();
+					
+				});
+				
+				$(".close-kb-help",keyboardHelpBox).click(function(){
+					$("#keyboard-help").removeClass("active");
+					$(keyboardHelpBox).hide();
+				});
+
+                //mute
+				$("#mute").click(function(){
+					
+					$(this).toggleClass("active");
+					
+				});
+                //select text box
+				$("input[rel=select-all]").attr({title:"Copy & Send the below link to your friends to invite them to play WordMatki with you here!"}).click(function(){
+					$(this).select();
+				})
+				
+				//invites open
+				
+				$(".btn-invite-friends").click(function(){
+					var wWidth=$(window).width();
+					var wHeight=$(window).height();
+					
+					var invWidth=$(".invite-friends").width();
+					var invHeight=$(".invite-friends").height();
+					
+					$(".invite-friends").css({left:(wWidth/2-invWidth/2),top:(wHeight/2-invHeight/2)}).fadeIn();
+					$(".invite-friends a.close").unbind("click").click(function(){
+						$(".invite-friends").fadeOut();
+					});					
+				});
+				
+				$(".btn-feedback").click(function(){
+					var wWidth=$(window).width();
+					var wHeight=$(window).height();
+					
+					var invWidth=$(".feedback-form").width();
+					var invHeight=$(".feedback-form").height();
+					
+					$(".feedback-form").css({left:(wWidth/2-invWidth/2),top:(wHeight/2-invHeight/2)}).fadeIn();
+					
+					$(".feedback-form a.close").unbind("click").click(function(){
+						$(".feedback-form").fadeOut();
+					});
+                    $(".feedback-form .btn-send").unbind("click").click(function() {
+                        var msg = $(".feedback-form textarea").val();
+                        $.post("http://"+SERVER+"/feedback", {'fbmsg':msg});
+                        $(".feedback-form").fadeOut();
+                    });
+					
+				});
+				
+				
+				$("#change-user").click(function(){
+					var wWidth=$(window).width();
+					var wHeight=$(window).height();
+					
+					var invWidth=$(".username-setting").width();
+					var invHeight=$(".username-setting").height();
+					
+					$(".username-setting").css({left:(wWidth/2-invWidth/2),top:(wHeight/2-invHeight/2)}).fadeIn();
+					
+					$(".username-setting a.close").unbind("click").click(function(){
+						$(".username-setting").fadeOut();
+					});
+					
+				});
+                
+			});
+			
+(function($) {
+    $.fn.textfill = function(options) {
+    	
+    	if($("#wm_font_resizer").length<1)
+    	var tempDIV = $("<div></div").attr({id:"wm_font_resizer"}).css({position:"absolute",left:0,top:0,zIndex:10000}).appendTo('body');
+    	
+        var fontSize = options.maxFontPixels;
+        var ourText = $('span:visible:first', this);
+        
+        var currentFontSize = parseInt(ourText.css("fontSize"));
+        tempDIV.css('font-size', currentFontSize).html(ourText.text());
+        
+        var topPadding = parseInt(ourText.css('paddingTop'));
+        
+        var leftPadding = parseInt(ourText.css('paddingLeft'));
+        
+        var maxHeight = $(this).height();
+        var maxWidth = $(this).width()-((leftPadding*2)+2);
+      
+        var textHeight;
+        var textWidth;
+        
+        do {
+        	
+            tempDIV.css('font-size', fontSize);
+            ourText.css({fontSize:fontSize,paddingTop:topPadding});
+            
+            textHeight = tempDIV.height();
+            textWidth = tempDIV.width();
+            fontSize = fontSize - 1;
+            
+            topPadding = topPadding+1;
+            
+        } while ((textHeight > maxHeight || textWidth > maxWidth) && fontSize > 3);
+        return this;
+    }
+})(jQuery);			
+
+		</script>
+        <script type="text/javascript">
+          $('.fb').attr('href',"http://www.facebook.com/sharer.php?u="+encodeURIComponent("http://"+window.location.host)+"/?s=1&t="+encodeURIComponent("MadRat Games - Word Matki")+"&d="+encodeURIComponent("I am playing Word Matki, the world's first Indian Language Word Game"));
+          $('.tw').attr('href',"https://twitter.com/share?url="+encodeURIComponent("http://"+window.location.host)+"&text="+encodeURIComponent("I am playing Word Matki, the world's first Indian Language Word Game!"));
+          $("g:plusone").attr('href',"http://"+window.location.host+"/?s=1&t=MadRat Games - Word Matki&d=I am playing Word Matki, the world's first Indian Language Word Game");
+          (function() {
+            var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+            po.src = 'https://apis.google.com/js/plusone.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+          })();
+        </script>
+		<div class="base-frame" >
+			<header>
+				<h1 class="logo" ><a href="javascript:;" ></a></h1>
+                <div class="choose-language">
+					<label>Hindi</label>
+                    <div class="lang-menu" >
+						<a href="javascript:;" class="handler" ><span>Choose Langauge</span></a>
+						<ul>
+							<span>
+							<li><a href="#" >Hindi</a></li>
+							<li><a href="#" >Tamil</a></li>
+							<li><a href="#" >Bengali</a></li>
+							<li><a href="#" >Kannada</a></li>
+							</span>
+						</ul>
+					</div>
+				</div>
+                <a id="mute" ></a>
+				<div class="header-panel-right" >
+				</div>
+                <div class="header-panel-left" >
+				</div>
+				<div class="header-panel-center" style="display:none">
+					
+					<!--score n timer -->
+					<div class="score-timer" >
+						<div class="item" >
+							<span class="label" >Timer</span>
+							<span class="value" id="timer" >--:--</span>
+						</div>
+						
+						<div class="item" >
+							<span class="label" >My Score</span>
+							<span class="value" id="score" >0</span>
+						</div>
+					</div>
+					<!--score n timer end-->
+
+				</div>
+				
+                <div class="makti-phod" >
+					<label>Matki Phod</label>
+					<ul class="social" >
+						<li><a href="#" target="_blank" class="fb" ></a></li>
+                        <li><a href="https://twitter.com/share" target="_blank" class="tw"></a></li>
+						<!--<li><a href="#" class="google" ></a></li>-->
+                        <li><g:plusone href="" size="medium" annotation="none"></g:plusone></li>
+					</ul>
+				</div>
+                
+				<!--user n actions -->
+				<div class="user-infos-actions" >
+                    <div class="post-login">
+                        <div class="user-infos" >
+                            <span class="pic" ><img src="images/profile-pic-blank-31x32.png" /></span>
+                            <span class="info" >
+                                <span class="name" id="name" >-</span>
+                                <!--<span class="iq" >IQ : 24</span>-->
+                                <span class="iq" id="iq" >Score: -</span>
+                            </span>
+                            
+                        </div>
+                        <div class="score-main" >
+                                <span class="rank" >My <!--Rank -->Games <span id="rank">-</span></span>
+                                <span class="score" >My <!--Score -->Words <span id="totalscore">-</span></span>
+                            </div>
+                        <div class="logout" >
+                            <a href="{{logout_url}}" >Logout</a>
+                        </div>
+                    </div>
+                    <div class="pre-login" style="display:none">
+						<div class="user-infos" >
+							<span class="pic" ><img src="images/profile-pic-blank-pre-login.png" /></span>
+							<span class="info" >
+								Sign in to personalise						
+							</span>	
+							<ul class="options" >
+								<li><a href="#" class="fb" ></a></li>
+								<li><a href="#" class="google" ></a></li>
+							</ul>				
+						</div>
+					</div>
+				</div>
+				<!--user n actions -->
+				
+				<!--nav-->
+				<menu class="top-nav-left" style="display:none">
+                    <li><a href="#" id="play_solo">Play Solo</a></li>
+                    <li><a href="#" id="live_game">Live Games</a></li>
+                    <!--<li><a href="#" class="active" >Play Friends</a></li>-->
+                </menu>					
+                <menu class="top-nav-right" style="display:none">
+					<li><a href="#" class="btn-invite-friends" >+Add friends</a></li>
+                    <li><a href="#" class="btn-feedback" >Feedback</a></li>
+                    <li><a href="javascript:;" rel="howtoplay" >Help</a></li>
+                </menu>
+			</header>
+			<div id="game_menu">
+
+                    <div class="pillar-bg splash" >
+                        <div class="pillar" >
+                            
+                            
+                            
+                            
+                            
+                        </div>
+                    </div>
+                    
+                    <div class="pillar-bg splash left" >
+                        <div class="pillar" >
+                            
+                            
+                            
+                            
+                            
+                        </div>
+                    </div>
+                    
+                    <h2 class="game-description" >
+                        
+                        <label> World's First <br/>
+                        
+        Indian Language Word Game!</label>
+
+                        <label>Find as many words as you can in under 3 minutes!</label>
+                        
+                    </h2>
+                    
+                    
+                    
+                    
+                    <div class="game-selection" >
+                        <div class="actions" >
+                            <a href="javascript:;" class="video" rel="howtoplay" ></a>
+                            <a href="javascript:soloInit();" onClick="_gaq.push(['_trackEvent', 'solo-game', myName, '']);" class="play-solo" ><span></span></a>
+                            <a href="javascript:liveInit();" onClick="_gaq.push(['_trackEvent', 'live-game', myName, '']);" class="live-games" ><span></span></a>
+                            <span class="info" >Choose the Live Games mode to play with thousands of people!</span>
+                        </div>
+                        
+                    </div>
+                    
+                    
+                    
+                    <div class="pillar-bottom splash" >
+                            
+                    </div>
+                    
+                    <div class="pillar-bottom-left" >
+                            
+                    </div>
+                    
+                    <div class="logos" >
+                        <a href="http://madratgames.com" target="_blank" class="madrat-logo" ></a>
+                        <a href="http://www.gamooga.com" target="_blank" class="gamooga-logo-powered" ></a>
+                    </div>
+                    
+                
+                
+                
+                
+                <!--start up langauage chooser-->
+                
+                <div class="choose-language-start-up" >
+				
+                    <div class="options" >
+                        <h1>Choose your Language</h1>
+                        <ul>
+                            <li><a class="l" href="#" ><span class="akshar h" ></span><span class="round" ></span><span class="label" >Hindi</span></a></li>
+                            <li><a class="r" href="#t" ><span class="akshar t" ></span><span class="round" ></span><span class="label" >Tamil</span></a></li>
+                            <li><a class="l" href="#b" ><span class="akshar b" ></span><span class="round" ></span><span class="label" >Bengali</span></a></li>
+                            <li><a class="r" href="#k" ><span class="akshar k" ></span><span class="round" ></span><span class="label" >Kannada</span></a></li>
+                        </ul>
+                    </div>
+                    
+                    
+                </div>
+                
+                
+                <!--start up langauage chooser-->
+                <script>
+                    function setCookie(cookieName,cookieValue,nDays) {
+                     var today = new Date();
+                     var expire = new Date();
+                     if (nDays==null || nDays==0) nDays=1;
+                     expire.setTime(today.getTime() + 3600000*24*nDays);
+                     document.cookie = cookieName+"="+escape(cookieValue)
+                                     + ";expires="+expire.toGMTString();
+                    }
+                    $(function(){
+                        
+                        $("body").howToPlayMakti({
+                            path:"images/howtoplay/",
+                            width:510,
+                            height:600,
+                            bgImage:"main-bg.png",
+                            images:[
+                                    "1.png",
+                                    "2.png",
+                                    "3.png",
+                                    "4.png",
+                                    "5.png",
+                                    "6.png",
+                                    "7.png"
+                                    ],
+                            callback:function(){}
+                        })
+                        $(".choose-language-start-up").hide();
+                        $(".choose-language-start-up a").attr({href:"javascript:;"}).click(function(){
+                            $(".gamooga-logo-powered").fadeIn();
+                            $(".choose-language-start-up").fadeOut();
+                            
+                        })
+                        if (document.cookie.search("wordmatki_visited") == -1) {
+                            setTimeout(function(){
+                                $("a[rel=howtoplay]").trigger('click');
+                                setCookie("wordmatki_visited","1",1000);
+                            },0);
+                        }
+                    });
+                    function mycarousel_initCallback(carousel) {
+                        
+                        jQuery('.scroller-friends .down').bind('click', function() {
+                            
+                            jQuery('.scroller-friends .up').css({visibility:"visible"});
+                                                            
+                            carousel.next();
+                            var totalScores = jQuery('.scroller-friends ul > li').length;
+                            console.log(totalScores);
+                            if(totalScores==carousel.last){
+                                $(this).css({visibility:"hidden"});
+                            }
+                            
+                            return false;
+                        });
+                    
+                        jQuery('.scroller-friends .up').css({visibility:"hidden"}).bind('click', function() {
+                            
+                            jQuery('.scroller-friends .down').css({visibility:"visible"});
+                            
+                            if(carousel.first==2){							    		
+                                $(this).css({visibility:"hidden"});
+                            }
+
+                            carousel.prev();
+                            return false;
+                        });
+                    }
+                </script>
+			</div>
+			<div id="game_play" style="display:none">
+				
+				<div class="pillar-bg" >
+					<div class="pillar" id="pillar-animation-ctr">
+						
+						<div class="game-board-main" >
+                            <div class="btn-reset-container" >
+                                <a class="btn-reset" href="javascript:;">Reset</a>
+                            </div>
+							<div class="board-bg" >
+								
+                                <div class="akshar-map-holder" >
+                                    <img src="images/transparency-0-bg.png" width="270" height="270" alt="hover" border="0" usemap="#aksharmap" />
+                                        
+                                    <map name="aksharmap">
+                                      
+                                      <area shape="circle" coords="35,32,32" href="javascript:;">	
+                                      <area shape="circle" coords="101,33,32" href="javascript:;">
+                                      <area shape="circle" coords="167,33,32" href="javascript:;">
+                                      <area shape="circle" coords="233,32,32" href="javascript:;">
+                                      <area shape="circle" coords="35,100,32" href="javascript:;">
+                                      <area shape="circle" coords="101,102,32" href="javascript:;">
+                                      <area shape="circle" coords="165,100,32" href="javascript:;">
+                                      <area shape="circle" coords="232,100,32" href="javascript:;">
+                                      <area shape="circle" coords="35,168,32" href="javascript:;">
+                                      <area shape="circle" coords="100,169,32" href="javascript:;">
+                                      <area shape="circle" coords="166,169,32" href="javascript:;">
+                                      <area shape="circle" coords="233,170,32" href="javascript:;">
+                                      <area shape="circle" coords="33,236,32" href="javascript:;">
+                                      <area shape="circle" coords="100,238,32" href="javascript:;">
+                                      <area shape="circle" coords="167,238,32" href="javascript:;">
+                                      <area shape="circle" coords="234,237,32" href="javascript:;">
+                                     
+                                    </map>
+                                        
+                                </div>
+                                
+								<ul>
+										<li><a href="#" ><span id="letter1">?</span></a></li>
+										<li><a href="#" ><span id="letter2">?</span></a></li>
+										<li><a href="#" ><span id="letter3">?</span></a></li>
+										<li><a href="#" ><span id="letter4">?</span></a></li>
+										
+										<li><a href="#" ><span id="letter5">?</span></a></li>
+										<li><a href="#" ><span id="letter6">?</span></a></li>
+										<li><a href="#" ><span id="letter7">?</span></a></li>
+										<li><a href="#" ><span id="letter8">?</span></a></li>
+										
+										<li><a href="#" ><span id="letter9">?</span></a></li>
+										<li><a href="#" ><span id="letter10">?</span></a></li>
+										<li><a href="#" ><span id="letter11">?</span></a></li>
+										<li><a href="#" ><span id="letter12">?</span></a></li>
+										
+										<li><a href="#" ><span id="letter13">?</span></a></li>
+										<li><a href="#" ><span id="letter14">?</span></a></li>
+										<li><a href="#" ><span id="letter15">?</span></a></li>
+										<li><a href="#" ><span id="letter16">?</span></a></li>
+									</ul>
+								
+								<div class="board-submit-btn" onClick="submitWord()">
+									
+									
+									
+								</div>
+								
+								
+							</div>
+							
+							<!--<div class="rotate-board" >
+									<a href="javascript:;" >Rotate Board </a>
+									<small>( use space bar as shortcut )</small>
+							</div>-->
+							
+							<div class="type-words" >
+								<span class="hint" id="hint" > &nbsp; </span>
+								<form action="javascript:void(0)" onsubmit="submitWord()" >
+									<div class="input-outer" >
+										<!--<input type="text" id="word" value="Type words here"  />-->
+										<script language="javascript">
+											CreateCustomHindiTextBox("word","Type words here");
+										</script>
+									</div>
+									<input class="button" type="button" id="submitBut" onClick="submitWord()" value="Submit">
+								</form>
+								<span class="tips" ><span id="tiplang"></span>, Hit enter to submit</span>
+								
+								<a class="keyboard" id="keyboard-help" href="javascript:;" title="Keyboard Help"  ><span  ></span></a> 
+							</div>
+							
+						</div>
+						
+						<div class="matras-main" >
+							<a href="javascript:void(0)" class="expand" ></a>
+							<div class="matras" >
+								<div class="hover-bg" >
+								<img src="images/transparency-0-bg.png" width="152" height="154" alt="hover" border="0" usemap="#Map" />
+	<map name="Map">
+	<area shape="poly" class="matra" coords="65,103,54,136,47,137,36,131,25,121,18,113,20,105,35,96,43,92,48,89,64,102" href="javascript:;">
+	<area shape="poly" class="matra" coords="45,63,27,58,14,53,7,58,5,66,5,75,6,82,7,89,10,96,13,101,18,102,31,93,40,88,46,86,44,64" href="javascript:;">
+	<area shape="poly" class="matra" coords="46,60,22,51,14,48,14,38,20,31,27,23,35,16,43,13,48,21,55,32,60,39,61,43,45,58" href="javascript:;">
+	<area shape="poly" class="matra" coords="61,4,87,4,103,8,110,13,108,19,94,41,91,44,71,41,65,42,55,24,50,15,51,6,60,5" href="javascript:;">
+	<area shape="poly" class="matra" coords="109,72,106,59,101,50,96,46,105,33,111,24,115,18,119,17,127,21,133,29,138,40,142,46,145,54,146,61,146,68,138,73,108,73" href="javascript:;">
+	<area shape="poly" class="matra" coords="109,76,107,86,103,91,115,100,126,107,133,110,140,101,144,90,145,82,139,77,110,74" href="javascript:;">
+	<area shape="poly" class="matra" coords="88,103,101,94,110,101,116,106,125,113,128,118,122,127,114,132,106,137,99,137,88,103" href="javascript:;">
+	</map>
+
+								</div>
+								<div class="akshars" >
+								<a href="#" class="m-1 matra" id="halfs0" >?</a>
+								<a href="#" class="m-2 matra" id="halfs1" >?</a>
+								<a href="#" class="m-3 matra" id="halfs2" >?</a>
+								<a href="#" class="m-4 matra" id="halfs3" >?</a>
+								<a href="#" class="m-5 matra" id="halfs4" >?</a>
+								<a href="#" class="m-6 matra" id="halfs5" >?</a>
+								<a href="#" class="m-7 matra" id="halfs6" >?</a>
+								</div>
+								
+								
+								
+								<a href="#" class="akshar" id="now_akshar" >?</a>
+								
+							</div>
+                            <div class="matra-addition-top" style="display:none">
+                                <div class="hover-bg" >
+                              <img src="images/transparency-0-bg.png" alt="hover" width="152" height="100" border="0" usemap="#Map3" />
+    <map name="Map3">
+      <area shape="poly" coords="39,33,31,17,42,10,51,6,62,2,72,8,73,15,74,29" href="javascript:void(0);">
+        <area shape="poly" coords="77,28,77,7,86,3,97,4,108,10,120,16,111,38,95,33,79,27" href="javascript:void(0);">
+    </map></div>
+                                <div class="akshars" >
+                                    <a href="#" class="m-1 matra" id="dhalfs1">A</a>
+                                    <a href="#" class="m-2 matra" id="dhalfs2">B</a>								
+                                </div>
+                            </div>
+                            
+							<div class="sub-matra-links-main">
+							<div class="sub-matra-links" >
+								<img src="images/transparency-0-bg.png" id="sub_matra_links_image" alt="hover" width="221" height="112" border="0" />
+	<map name="Map2-6">
+	<area shape="poly" coords="22,56,12,41,8,25,7,15,21,11,50,9,52,10,57,23,58,34,57,36,23,58" href="javascript:void(0)">
+	<area shape="poly" coords="74,43,66,35,56,42,37,56,30,65,39,75,50,84,59,89,64,86,79,56,81,52" href="javascript:void(0)">
+	<area shape="poly" coords="67,93,83,101,103,105,109,97,108,69,108,60,107,57,100,60,86,54,67,91" href="javascript:void(0)">
+	<area shape="poly" coords="113,58,138,55,144,68,154,87,155,93,140,100,126,104,113,103,113,80" href="javascript:void(0)">
+	<area shape="poly" coords="162,87,178,77,190,64,189,59,157,36,140,54,151,72,161,87" href="javascript:void(0)">
+	<area shape="poly" coords="170,9,176,10,201,11,212,16,208,34,198,53,192,55,162,33" href="javascript:void(0)">
+	</map>
+    <map name="Map2-7">
+    <area shape="poly" coords="54,33,20,46,11,47,6,37,5,23,5,11,6,3,22,4,42,7,50,8,54,32" href="javascript:void(0);">
+    <area shape="poly" coords="56,38,34,46,18,53,14,58,19,68,27,77,33,86,38,91,46,89,58,75,68,64,71,60,55,38" href="javascript:void(0);">
+    <area shape="poly" coords="95,67,89,90,85,108,82,113,75,114,63,108,53,102,48,97,55,85,68,70,74,63" href="javascript:void(0);">
+    <area shape="poly" coords="121,67,126,87,130,106,131,114,118,118,101,118,91,113,93,95,100,74,100,68" href="javascript:void(0);">
+    <area shape="poly" coords="142,54,161,75,174,91,174,96,163,101,149,110,139,113,130,84,125,67" href="javascript:void(0);">
+    <area shape="poly" coords="145,52,154,39,159,36,200,53,202,61,190,81,181,87" href="javascript:void(0);">
+    <area shape="poly" coords="161,32,162,20,165,11,178,7,202,5,211,4,211,20,208,39,205,47" href="javascript:void(0);">
+    </map>
+    <map name="Map2-5">
+    <area shape="poly" coords="20,62,9,52,5,36,8,31,21,26,49,16,52,20,57,33,59,36,55,45,26,71" href="javascript:void(0);">
+    <area shape="poly" coords="76,49,65,37,55,48,39,62,32,73,41,81,52,90,61,95,70,93,79,57,83,52" href="javascript:void(0);">
+    <area shape="poly" coords="77,95,83,101,104,101,119,95,113,70,102,8,106,57,100,60,86,54,74,92" href="javascript:void(0);">
+    <area shape="poly" coords="115,49,136,44,150,60,160,74,161,85,146,92,135,94,122,94,118,71" href="javascript:void(0);">
+    <area shape="poly" coords="168,73,178,63,188,49,192,35,155,21,138,39,149,57,161,69" href="javascript:void(0);">
+    </map>
+							</div>
+							<div class="matras-expanded">
+								<div class="sub-matra-hover" >                        	</div>
+								<a href="#" class="m-1 matra" id="halfs7" >?</a>
+								<a href="#" class="m-2 matra" id="halfs8" >?</a>
+								<a href="#" class="m-3 matra" id="halfs9" >?</a>
+								<a href="#" class="m-4 matra" id="halfs10" >?</a>
+								<a href="#" class="m-5 matra" id="halfs11" >?</a>
+								<a href="#" class="m-6 matra" id="halfs12" >?</a>
+                                <a href="#" class="m-7 matra" id="halfs13" >?</a>
+								
+							</div>
+                            </div>
+						</div>
+						
+					</div>
+				</div>
+				
+				<div class="word-found" >
+					<div class="content" >
+						<h3>All Words</h3>
+						<div class="scroll-content" >
+							<ul id="words_list">
+							</ul>
+						</div>
+					</div>
+					<a href="javascript:;" class="btn-action expand" >
+						
+						<span class="status" ></span>	
+						
+						<span class="label" >
+							Words Found
+						</span>	
+						
+					</a>
+				</div>
+				
+				<div class="online-friends" >
+					<div class="content" >
+						<div class="inner-wrapper" >                            
+							<div class="scroller-friends" >
+								<a href="#" class="up" ></a>
+								<ul id="online_friends_list" class="scroller-friends-content" style="height:100%">
+							<!--<div class="friend-list" >
+								<span class="pic" ><img src="images/profile-pic-blank-45x44.png" /></span>
+								<span class="name-score" >
+									<span class="name">Venkatesh Rajagopal</span>
+									<span class="points" >50 pts</span>
+								</span>
+								<span class="rank" >
+									1st
+								</span>
+							</div>
+							
+							<div class="scroller-friends" >
+								<a href="#" class="up" ></a>
+								<div class="scroller-friends-content" >
+									
+									<li class="friend-list" >
+										<span class="pic" ><img src="images/profile-pic-blank-45x44.png" /></span>
+										<span class="name-score" >
+											<span class="name">Venkatesh Rajagopal</span>
+											<span class="points" >50 pts</span>
+										</span>
+										<span class="rank" >
+											2nd
+										</span>
+									</li>
+									
+									<div class="friend-list" >
+										<span class="pic" ><img src="images/profile-pic-blank-45x44.png" /></span>
+										<span class="name-score" >
+											<span class="name">Venkatesh Rajagopal</span>
+											<span class="points" >50 pts</span>
+										</span>
+										<span class="rank" >
+											3rd
+										</span>
+									</div>
+									
+									<div class="friend-list mine" >
+										<span class="name" >Current Score</span>
+										<span class="points-score" >
+											<span class="points" >47 pts</span>
+											<span class="rank" >4th</span>
+										</span>
+									</div>
+									
+									<div class="friend-list" >
+										<span class="pic" ><img src="images/profile-pic-blank-45x44.png" /></span>
+										<span class="name-score" >
+											<span class="name">Venkatesh Rajagopal</span>
+											<span class="points" >50 pts</span>
+										</span>
+										<span class="rank" >
+											5th
+										</span>
+									</div>-->
+									
+								</ul>
+								<a href="#" class="down" ></a>
+							</div>
+							
+						</div>
+					</div>
+					<a href="javascript:;" class="btn-action expand" >
+						
+						<span class="status" ></span>	
+						
+						<span class="label" >
+							Live Friend &nbsp;  <small class="count" id="live_count"></small> 
+						</span>	
+						
+					</a>
+					
+				</div>
+
+                <a href="javascript:;" class="btn-makti-chat" >
+					
+					<span class="status" ></span>	
+					
+					<span class="label" >
+						Matki Chat
+					</span>	
+					
+				</a>
+			
+                <div class="pillar-bottom" >
+                        <div class="bottom-timer" >
+                            <label>Round ends in</label>
+                            <span class="value" ><span id="timer-bottom">--:--</span> mins</span>
+                        </div>
+                </div>
+                
+                <div class="logos" >
+                    <a href="http://madratgames.com" target="_blank" class="madrat-logo" ></a>
+                    <!--<a href="http://www.gamooga.com" target="_blank" class="gamooga-logo" ></a>-->
+                </div>
+                <div class="keyboard-help-box" >
+                    <a class="close-kb-help" href="javascript:;" ></a>
+                    <h2>Keyboard Typing Guide</h2>
+                    <h3>Eg:</h3>
+                    <ul class="akshars" >
+                        <li><span>च</span><span>cha</span></li>
+                        <li><span>छ</span><span>Cha</span></li>
+                        <li><span>च्</span><span>ch</span></li>
+                        <li><span>चा</span><span>chaa</span></li>
+                        <li><span>चे</span><span>che</span></li>
+                        <li><span>चै</span><span>chai</span></li>
+                        <li><span>चि</span><span>chi</span></li>
+                        <li><span>ची</span><span>chI</span></li>
+                        <li><span>चो</span><span>cho</span></li>
+                        <li><span>चौ</span><span>chau</span></li>
+                        <li><span>चु</span><span>chu</span></li>
+                        <li><span>चू</span><span>chU</span></li>
+                        <li><span>चं</span><span>chM</span></li>
+                        
+                        <li><span>ड</span><span>Da</span></li>
+                        <li><span>ढ</span><span>Dha</span></li>
+                        <li><span>द</span><span>da</span></li>
+                        <li><span>दा</span><span>daa</span></li>
+                        <li><span>दे</span><span>de</span></li>
+                        <li><span>दै</span><span>dai</span></li>
+                        <li><span>दि</span><span>di</span></li>
+                        <li><span>दी</span><span>dI</span></li>
+                        <li><span>दो</span><span>do</span></li>
+                        <li><span>दौ</span><span>dau</span></li>
+                        <li><span>दु</span><span>du</span></li>
+                        <li><span>दू</span><span>dU</span></li>
+                        <li><span>दं</span><span>dM</span></li>
+                        
+                        <li><span>त</span><span>ta</span></li>
+                        <li><span>ट</span><span>Ta</span></li>
+                        <li><span>थ</span><span>tha</span></li>
+                        <li><span>ठ</span><span>Tha</span></li>
+                        <li><span>श</span><span>sh</span></li>
+                        <li><span>क्ष</span><span>x</span></li>
+                        <li><span>हिं</span><span>hiM</span></li>					
+                        <li><span></span><span></span></li>
+                        <li><span></span><span></span></li>
+                        <li><span></span><span></span></li>
+                        <li><span></span><span></span></li>
+                        <li><span></span><span></span></li>
+                        <li><span></span><span></span></li>
+                    </ul>
+                    <div class="sample" >
+                        <h3>Eg:</h3>
+                        <div class="words" >
+                            <div>
+                                <span>ghar</span>
+                                <span>घर</span>
+                            </div>
+                            <div>
+                                <span>titalI</span>
+                                <span>तितली </span>
+                            </div>
+                            <div>
+                                <span>chaaMd</span>
+                                <span>चांद</span>
+                            </div>
+                            <div>
+                                <span>namaskaar</span>
+                                <span>नमस्कार</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+
+                <div class="invite-friends" >
+				
+                    <div class="wrapper" >
+                        <a href="#" class="close" ></a>
+                        <h1><span>Add Friends</span></h1>
+                        
+                        <p>Share the below link with your friends<br> to invite them to play WordMatki with you here!</p>
+                        
+                        <div class="input-box" ><input rel="select-all" type="text" value="http://wordmatki.aksharit.com/" /></div>
+                         
+                        <ul class="share-at" >
+                            <li>Share link on</li>
+                            <li><a href="#" target="_blank" class="fb" ></a></li>
+                            <li><a href="#" target="_blank" class="tw"></a></li>
+                            <!--<li><a href="#" class="google" ></a></li>-->
+                            <li><g:plusone href="" size="medium" annotation="none"></g:plusone></li>
+
+                        </ul>
+                        
+                        <button class="btn-send" >OK</button>
+                        
+                    </div>
+                    
+                </div>
+                
+                
+                <div class="feedback-form" >
+                    
+                    <div class="wrapper" >
+                        <a href="#" class="close" ></a>
+                        <h1><span>Feedback</span></h1>
+                        
+                        <p>Please share any feedback you have on WordMatki: </p>
+                        
+                        <div class="input-box" ><textarea></textarea></div>
+                         
+                        <button class="btn-send" >Send</button>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="username-setting" >
+                    
+                    <div class="wrapper" >
+                        <a href="#" class="close" ></a>
+                        <h1><span>Username</span></h1>
+                        
+                        <p>Would you like to change your name?</p>
+                        
+                        <div class="input-box" ><input rel="select-all" value="manuj@madratgames.com" ></input></div>
+                         
+                        <button class="btn-send" >OK</button>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="solo-round-over-message-box" >
+                    
+                    <div class="wrapper" >
+                        
+                        <h1><span>ROUND OVER!</span></h1>
+                        <p class="info" >You scored <span class="current-score" >11</span> pts <br>but your highscore is still <span class="highest-score" >74</span>pts.</p>
+                        
+                        <div class="actions" >
+                            
+                            <button><span>Play <br>Again</span></button>
+                            
+                            <ul class="share-at" >
+                                <li>Share on</li>
+                                <li><a href="#" class="fb" ></a></li>
+                                <li><a href="#" class="tw" ></a></li>
+                                <li><a href="#" class="google" ></a></li>
+                            </ul>
+                            
+                        </div>	
+                        
+                        <h2><span>To Add Friends</span></h2>
+                        <p class="label">Copy & Send the below link to your friends <br>to invite them to play WordMatki with you here!</p>
+                        
+                        <div class="input-box" ><input rel="select-all" type="text" value="http://wordmatki.aksharit.com/2242" /></div>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="live-round-over-message-box" >
+                    
+                    <div class="wrapper" >
+                        
+                        <h1><span>ROUND OVER!</span></h1>
+                        <p class="info" >Next Round Starts in</p>
+                        
+                        <span class="timer" id="restart_timer">0s</span>
+                        
+                        <p class="label" >You scored <span class="current-score" id="restart_score">58</span>pts in this session</p>
+                        
+                        <div class="actions" >
+                            
+                            <ul class="share-at" >
+                                <li>Share on</li>
+                                <li><a href="#" target="_blank" class="fb" ></a></li>
+                                <li><a href="#" target="_blank" class="tw"></a></li>
+                                <!--<li><a href="#" class="google" ></a></li>-->
+                                <li><g:plusone href="" size="medium" annotation="none"></g:plusone></li>
+                            </ul>
+                            
+                        </div>	
+                        
+                    </div>
+                    
+                </div>
+
+			</div>
+			<!--<a href="http://madratgames.com" target="_blank" class="madrat-logo" ></a>-->
+		</div>
+		<div id="start_screen" style="display:none">
+			<div id="connecting" style="width:200px;">
+				<h2 id="preload_text">Loading... <!--<span id="preload_remain">0</span>/<span id="preload_total">0</span>--> <span id="preload_percent">0%</span></h2>
+			</div>
+			<div id="lobby">
+			    <h3 style="font-size:150%;padding:3px;text-align:center">Users joined</h3>
+				<div id="ujoined" style="height:200px;overflow:auto" style="text-align:center"></div>
+				<div id="start_game" style="text-align:center"><input type="button" onClick="initGame()" value="Start"></div>
+				<div id="wait_owner" style="text-align:center">Please wait for owner to start the game</div>
+			</div>
+			<div id="restart" style="background:url(/images/round-over-bg.png);width:248px;height:287px;position:relative">
+			    <div style="position:relative;top:160px;left:0px">
+			    <h2 style="font-size:140%;text-align:center;color:#fff"><span id="restart_timer_old">0s</span></h2>
+			    </div>
+                <div style="position:relative;top:190px;left:0px">
+                    Your scored 50 pts in this session
+                    <ul class="share-at" >
+                        <li>Share on</li>
+                        <li><a href="#" class="fb" ></a></li>
+                        <li><a href="#" class="tw" ></a></li>
+                        <li><a href="#" class="google" ></a></li>
+                    </ul>
+                </div>
+			</div>
+		</div>
+	</body>
+</html>

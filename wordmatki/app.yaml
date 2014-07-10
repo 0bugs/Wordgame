@@ -1,0 +1,22 @@
+application: wm-mrg
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /
+  script: main.py
+- url: /logout
+  script: main.py
+- url: /validate
+  script: main.py
+- url: /feedback
+  script: main.py
+- url: /aksharit_get_user_data/.*/
+  script: main.py
+- url: /aksharit_update_user_lang/.*/
+  script: main.py
+- url: /aksharit_inc_user_data/
+  script: main.py
+- url: /
+  static_dir: static
